@@ -71,23 +71,21 @@ function closeCart() { $("#modalBackdrop").classList.add("hidden"); }
 
 async function placeOrder(event) {
   event.preventDefault();
-  const form = new FormData(event.currentTarget);
-  const items = Object.values(state.cart).map(item => ({ menuItem: item._id, quantity: item.quantity }));
-  const submit = event.currentTarget.querySelector("button[type=submit]");
-  submit.disabled = true; submit.textContent = "Placing order…";
-  try {
-    const order = await request(`${API}/orders`, { method: "POST", body: {
-      customerName: form.get("customerName"), studentId: form.get("studentId"),
-      pickupNote: form.get("pickupNote"), items
-    }});
-    state.myOrderIds = [order._id, ...state.myOrderIds].slice(0, 10);
-    localStorage.setItem("campusbiteOrderIds", JSON.stringify(state.myOrderIds));
-    state.cart = {}; renderCartFab(); closeCart(); event.currentTarget.reset();
-    toast(`Order placed! Your order ID is ${order._id.slice(-6).toUpperCase()}`);
-    await loadMyOrders();
-    $("#orders").scrollIntoView({ behavior: "smooth" });
-  } catch (err) { toast(err.message); }
-  finally { submit.disabled = false; submit.innerHTML = 'Place order <span>→</span>'; }
+
+  // Save the form before any await
+  const formElement = event.currentTarget;
+  const form = new FormData(formElement);
+
+  const items = Object.values(state.cart).map(item => ({
+    menuItem: item._id,
+    quantity: item.quantity
+  }));
+
+  const submit = formElement.querySelector('button[type="submit"]');
+
+  // Keep the rest of your existing function here.
+  // After the request succeeds, use:
+  // formElement.reset();
 }
 function statusClass(status) { return String(status).toLowerCase(); }
 async function loadMyOrders() {
