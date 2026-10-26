@@ -72,7 +72,7 @@ function closeCart() { $("#modalBackdrop").classList.add("hidden"); }
 
 async function placeOrder(event) {
   event.preventDefault();
-  const form = new FormData(event.currentTarget);
+  const formElement = event.currentTarget;
   const items = Object.values(state.cart).map(item => ({ menuItem: item._id, quantity: item.quantity }));
   const submit = event.currentTarget.querySelector("button[type=submit]");
   submit.disabled = true; submit.textContent = "Placing order…";
