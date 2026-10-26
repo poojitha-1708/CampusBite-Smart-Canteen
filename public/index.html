@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="CampusBite smart campus canteen ordering and management">
+  <title>CampusBite | Smart Canteen</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#"><span class="brand-mark">CB</span><span>Campus<span class="brand-accent">Bite</span><small>SMART CANTEEN</small></span></a>
+    <nav><a class="nav-link active" href="#menu">Menu</a><a class="nav-link" href="#orders">My Orders</a><button id="adminToggle" class="btn btn-outline btn-small">Admin login</button></nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <span class="eyebrow"><span class="live-dot"></span> YOUR CAMPUS, YOUR FLAVOUR</span>
+        <h1>Good food.<br><em>Zero queue.</em></h1>
+        <p>Order your campus favourites in a few taps. Pick up fresh, delicious food when it suits your schedule.</p>
+        <a class="btn btn-primary" href="#menu">Explore today's menu <span>↗</span></a>
+        <div class="hero-meta"><span>✦ Freshly prepared</span><span>◷ Quick pickup</span><span>₹ Student friendly</span></div>
+      </div>
+      <div class="hero-art"><div class="art-circle"></div><div class="food-emoji">🍱</div><div class="floating-card"><span class="float-icon">⚡</span><div><b>Quick pickup</b><small>Less waiting, more living</small></div></div><div class="hero-tag">MADE FOR CAMPUS LIFE</div></div>
+    </section>
+
+    <section class="stats-strip">
+      <div><span class="stat-icon">🍽</span><span><b id="menuCount">—</b><small>Menu items</small></span></div>
+      <div><span class="stat-icon">⏱</span><span><b>5–15 min</b><small>Typical prep time</small></span></div>
+      <div><span class="stat-icon">♧</span><span><b>Made fresh</b><small>Every single day</small></span></div>
+      <div class="status-chip"><span class="live-dot"></span> Canteen is serving</div>
+    </section>
+
+    <section class="section" id="menu">
+      <div class="section-heading"><div><span class="eyebrow">WHAT'S COOKING</span><h2>Today's <em>menu</em></h2><p>Find your favourite, add it to your cart, and you're all set.</p></div><label class="search-box">⌕ <input id="searchInput" placeholder="Search dishes..." aria-label="Search dishes"></label></div>
+      <div class="filters" id="categoryFilters">
+        <button class="filter active" data-category="All">All items</button><button class="filter" data-category="Breakfast">Breakfast</button><button class="filter" data-category="Meals">Meals</button><button class="filter" data-category="Snacks">Snacks</button><button class="filter" data-category="Beverages">Beverages</button>
+      </div>
+      <div id="menuGrid" class="menu-grid"><div class="loading">Loading the menu…</div></div>
+    </section>
+
+    <section class="section order-section" id="orders">
+      <div class="section-heading"><div><span class="eyebrow">ORDER UPDATES</span><h2>Your <em>orders</em></h2><p>Track the latest orders placed from this browser session.</p></div><button id="refreshOrders" class="btn btn-outline">↻ Refresh</button></div>
+      <div id="myOrders" class="orders-list"><div class="empty-state">Your recent orders will appear here after checkout.</div></div>
+    </section>
+
+    <section id="loginPanel" class="section admin-panel hidden">
+      <div class="section-heading"><div><span class="eyebrow">RESTRICTED AREA</span><h2>Admin <em>login</em></h2><p>Sign in to manage menu items and orders.</p></div><button id="closeLogin" class="btn btn-outline">Close</button></div>
+      <form id="adminLoginForm" class="checkout-form login-form">
+        <label>Username<input name="username" required autocomplete="username" placeholder="Admin username"></label>
+        <label>Password<input name="password" type="password" required autocomplete="current-password" placeholder="Admin password"></label>
+        <button class="btn btn-primary" type="submit">Sign in to dashboard →</button>
+        <p class="form-note">Use the credentials configured in your local .env file.</p>
+      </form>
+      <p id="loginError" class="login-error hidden"></p>
+    </section>
+    <section id="adminPanel" class="section admin-panel hidden">
+      <div class="section-heading"><div><span class="eyebrow">CANTEEN OPERATIONS</span><h2>Staff <em>dashboard</em></h2><p>Demo staff controls for menu availability and order status.</p></div><div class="admin-actions"><button id="closeAdmin" class="btn btn-outline">Close dashboard</button><button id="adminLogout" class="btn btn-outline">Log out</button></div></div>
+      <div class="admin-stats" id="adminStats"></div>
+      <div class="admin-toolbar"><h3>Recent orders</h3><button id="seedMenu" class="btn btn-primary btn-small">Load sample menu (if empty)</button></div>
+      <div class="table-wrap"><table><thead><tr><th>Order</th><th>Student</th><th>Items</th><th>Total</th><th>Status</th><th>Update</th></tr></thead><tbody id="adminOrders"><tr><td colspan="6">Loading orders…</td></tr></tbody></table></div>
+      <div class="admin-toolbar"><h3>Menu availability</h3><button id="showAddMenu" class="btn btn-primary btn-small">+ Add menu item</button></div>
+      <form id="addMenuForm" class="add-menu-form hidden">
+        <label>Dish name<input name="name" required maxlength="80"></label>
+        <label>Category<select name="category" required><option>Breakfast</option><option>Meals</option><option>Snacks</option><option>Beverages</option></select></label>
+        <label>Price (₹)<input name="price" type="number" min="1" required></label>
+        <label>Emoji<input name="image" maxlength="8" value="🍽️"></label>
+        <label>Prep time (minutes)<input name="prepTime" type="number" min="1" value="10" required></label>
+        <label class="wide-field">Description<input name="description" maxlength="240"></label>
+        <button type="submit" class="btn btn-primary">Save dish</button><button type="button" id="cancelAddMenu" class="btn btn-outline">Cancel</button>
+      </form>
+      <div id="adminMenu" class="admin-menu-list"></div>
+      <p class="notice">For this academic demo, the staff dashboard has no login. Add authentication before deploying it publicly.</p>
+    </section>
+  </main>
+
+  <footer><a class="brand footer-brand" href="#"><span class="brand-mark">CB</span><span>Campus<span class="brand-accent">Bite</span><small>SMART CANTEEN</small></span></a><span>Built for better campus breaks. © <span id="year"></span> CampusBite</span><a href="#menu">Back to top ↑</a></footer>
+
+  <div id="cartFab" class="cart-fab hidden"><span>🛍</span><span><b id="cartFabCount">0</b> items</span><strong id="cartFabTotal">₹0</strong><button id="openCart" aria-label="Open cart">View cart →</button></div>
+  <div id="modalBackdrop" class="modal-backdrop hidden">
+    <div class="cart-modal" role="dialog" aria-modal="true" aria-labelledby="cartTitle">
+      <div class="modal-head"><div><span class="eyebrow">ALMOST THERE</span><h2 id="cartTitle">Your <em>cart</em></h2></div><button id="closeCart" class="icon-btn" aria-label="Close cart">✕</button></div>
+      <div id="cartItems" class="cart-items"></div>
+      <div class="cart-total"><span>Total amount</span><strong id="cartTotal">₹0</strong></div>
+      <form id="checkoutForm" class="checkout-form"><label>Your name<input name="customerName" required maxlength="80" placeholder="e.g. Ananya Rao"></label><label>Student ID <span class="optional">(optional)</span><input name="studentId" maxlength="40" placeholder="e.g. 24CS012"></label><label>Pickup note <span class="optional">(optional)</span><input name="pickupNote" maxlength="200" placeholder="e.g. Less spicy, please"></label><button class="btn btn-primary checkout-btn" type="submit">Place order <span>→</span></button><p class="form-note">Payment is not integrated. This demo records orders for canteen pickup.</p></form>
+    </div>
+  </div>
+  <div id="toast" class="toast" role="status"></div>
+  <script src="/app.js"></script>
+</body>
+</html>
