@@ -83,7 +83,7 @@ async function placeOrder(event) {
     }});
     state.myOrderIds = [order._id, ...state.myOrderIds].slice(0, 10);
     localStorage.setItem("campusbiteOrderIds", JSON.stringify(state.myOrderIds));
-    state.cart = {}; renderCartFab(); closeCart(); event.currentTarget.reset();
+    state.cart = {}; renderCartFab(); closeCart(); formElement.reset();
     toast(`Order placed! Your order ID is ${order._id.slice(-6).toUpperCase()}`);
     await loadMyOrders();
     $("#orders").scrollIntoView({ behavior: "smooth" });
