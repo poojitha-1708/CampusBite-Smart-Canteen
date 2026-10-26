@@ -72,10 +72,9 @@ function closeCart() { $("#modalBackdrop").classList.add("hidden"); }
 
 async function placeOrder(event) {
   event.preventDefault();
-  const formElement = event.currentTarget;
-  const form = new FormData(formElement);
+  const form = new FormData(event.currentTarget);
   const items = Object.values(state.cart).map(item => ({ menuItem: item._id, quantity: item.quantity }));
-  const submit = formElement.querySelector("button[type=submit]");
+  const submit = event.currentTarget.querySelector("button[type=submit]");
   submit.disabled = true; submit.textContent = "Placing order…";
   try {
     const order = await request(`${API}/orders`, { method: "POST", body: {
@@ -84,7 +83,7 @@ async function placeOrder(event) {
     }});
     state.myOrderIds = [order._id, ...state.myOrderIds].slice(0, 10);
     localStorage.setItem("campusbiteOrderIds", JSON.stringify(state.myOrderIds));
-    state.cart = {}; renderCartFab(); closeCart(); formElement.reset();
+    state.cart = {}; renderCartFab(); closeCart(); event.currentTarget.reset();
     toast(`Order placed! Your order ID is ${order._id.slice(-6).toUpperCase()}`);
     await loadMyOrders();
     $("#orders").scrollIntoView({ behavior: "smooth" });
