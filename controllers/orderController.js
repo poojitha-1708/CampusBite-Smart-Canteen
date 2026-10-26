@@ -10,6 +10,20 @@ exports.getOrders = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
+
+// Student order tracking: return only the orders whose IDs the student saved locally.
+exports.trackOrders = async (req, res, next) => {
+  try {
+    const orderIds = Array.isArray(req.body.orderIds) ? req.body.orderIds : [];
+    const validIds = orderIds
+      .filter(id => typeof id === "string" && /^[a-fA-F0-9]{24}$/.test(id))
+      .slice(0, 10);
+    if (!validIds.length) return res.json([]);
+    const orders = await Order.find({ _id: { $in: validIds } }).sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (err) { next(err); }
+};
+
 exports.createOrder = async (req, res, next) => {
   try {
     const { customerName, studentId, items, pickupNote } = req.body;

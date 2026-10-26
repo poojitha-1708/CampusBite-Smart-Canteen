@@ -4,6 +4,7 @@ const requireAdmin = require("../middleware/requireAdmin");
 const router = express.Router();
 
 router.get("/stats", requireAdmin, c.getStats);
+router.post("/track", c.trackOrders);
 router.get("/", requireAdmin, c.getOrders);
 router.post("/", c.createOrder);
 router.patch("/:id/status", requireAdmin, c.updateOrderStatus);

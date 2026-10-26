@@ -6,6 +6,7 @@ const esc = (value) => String(value ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp
 
 async function request(url, options = {}) {
   const response = await fetch(url, {
+    credentials: "same-origin",
     headers: { "Content-Type": "application/json" },
     ...options,
     body: options.body ? JSON.stringify(options.body) : undefined
@@ -71,9 +72,10 @@ function closeCart() { $("#modalBackdrop").classList.add("hidden"); }
 
 async function placeOrder(event) {
   event.preventDefault();
-  const form = new FormData(event.currentTarget);
+  const formElement = event.currentTarget;
+  const form = new FormData(formElement);
   const items = Object.values(state.cart).map(item => ({ menuItem: item._id, quantity: item.quantity }));
-  const submit = event.currentTarget.querySelector("button[type=submit]");
+  const submit = formElement.querySelector("button[type=submit]");
   submit.disabled = true; submit.textContent = "Placing order…";
   try {
     const order = await request(`${API}/orders`, { method: "POST", body: {
@@ -82,7 +84,7 @@ async function placeOrder(event) {
     }});
     state.myOrderIds = [order._id, ...state.myOrderIds].slice(0, 10);
     localStorage.setItem("campusbiteOrderIds", JSON.stringify(state.myOrderIds));
-    state.cart = {}; renderCartFab(); closeCart(); event.currentTarget.reset();
+    state.cart = {}; renderCartFab(); closeCart(); formElement.reset();
     toast(`Order placed! Your order ID is ${order._id.slice(-6).toUpperCase()}`);
     await loadMyOrders();
     $("#orders").scrollIntoView({ behavior: "smooth" });
@@ -96,8 +98,10 @@ async function loadMyOrders() {
     $("#myOrders").innerHTML = `<div class="empty-state">Your recent orders will appear here after checkout.</div>`; return;
   }
   try {
-    const all = await request(`${API}/orders`);
-    const mine = all.filter(order => state.myOrderIds.includes(order._id));
+    const mine = await request(`${API}/orders/track`, {
+      method: "POST",
+      body: { orderIds: state.myOrderIds }
+    });
     $("#myOrders").innerHTML = mine.length ? mine.map(order => `
       <article class="order-card"><div><h3>Order #${order._id.slice(-6).toUpperCase()} · ${esc(order.customerName)}</h3>
       <p>${order.items.map(item => `${esc(item.name)} × ${item.quantity}`).join(", ")}<br>${new Date(order.createdAt).toLocaleString()}</p></div>
@@ -188,11 +192,12 @@ $("#seedMenu").addEventListener("click", async () => {
 });
 $("#adminLoginForm").addEventListener("submit", async event => {
   event.preventDefault();
-  const form = new FormData(event.currentTarget);
+  const formElement = event.currentTarget;
+  const form = new FormData(formElement);
   const errorEl = $("#loginError"); errorEl.classList.add("hidden");
   try {
     await request(`${API}/auth/login`, { method: "POST", body: { username: form.get("username"), password: form.get("password") } });
-    state.isAdmin = true; event.currentTarget.reset();
+    state.isAdmin = true; formElement.reset();
     $("#loginPanel").classList.add("hidden"); $("#adminPanel").classList.remove("hidden");
     await loadAdmin(); $("#adminPanel").scrollIntoView({ behavior: "smooth" }); toast("Signed in as admin");
   } catch (err) { errorEl.textContent = err.message; errorEl.classList.remove("hidden"); }
@@ -207,11 +212,12 @@ $("#showAddMenu").addEventListener("click", () => $("#addMenuForm").classList.to
 $("#cancelAddMenu").addEventListener("click", () => $("#addMenuForm").classList.add("hidden"));
 $("#addMenuForm").addEventListener("submit", async event => {
   event.preventDefault();
-  const data = Object.fromEntries(new FormData(event.currentTarget).entries());
+  const formElement = event.currentTarget;
+  const data = Object.fromEntries(new FormData(formElement).entries());
   data.price = Number(data.price); data.prepTime = Number(data.prepTime); data.available = true;
   try {
     await request(`${API}/menu`, { method: "POST", body: data });
-    event.currentTarget.reset(); $("#addMenuForm").classList.add("hidden");
+    formElement.reset(); $("#addMenuForm").classList.add("hidden");
     await loadMenu(); await loadAdmin(); toast("Menu item added");
   } catch (err) { toast(err.message); }
 });
