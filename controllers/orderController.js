@@ -11,22 +11,23 @@ exports.getOrders = async (req, res, next) => {
 };
 
 
-// Student order tracking: return only the orders whose IDs the student saved locally.
+// Students can track only orders linked to their authenticated account.
 exports.trackOrders = async (req, res, next) => {
   try {
-    const orderIds = Array.isArray(req.body.orderIds) ? req.body.orderIds : [];
-    const validIds = orderIds
-      .filter(id => typeof id === "string" && /^[a-fA-F0-9]{24}$/.test(id))
-      .slice(0, 10);
-    if (!validIds.length) return res.json([]);
-    const orders = await Order.find({ _id: { $in: validIds } }).sort({ createdAt: -1 });
+    if (!req.session || !req.session.studentId) return res.status(401).json({ message: "Please log in to view your orders." });
+    const orders = await Order.find({ studentAccount: req.session.studentId }).sort({ createdAt: -1 }).limit(50);
     res.json(orders);
   } catch (err) { next(err); }
 };
 
 exports.createOrder = async (req, res, next) => {
   try {
-    const { customerName, studentId, items, pickupNote } = req.body;
+    const { items, pickupNote } = req.body;
+    if (!req.session || !req.session.studentId || !req.session.student) {
+      return res.status(401).json({ message: "Please log in as a student before placing an order." });
+    }
+    const customerName = req.session.student.name;
+    const studentId = req.session.student.studentId;
     if (!customerName || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ message: "Name and at least one cart item are required" });
     }
@@ -40,7 +41,7 @@ exports.createOrder = async (req, res, next) => {
       orderItems.push({ menuItem: menuItem._id, name: menuItem.name, price: menuItem.price, quantity });
     }
     const totalAmount = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const order = await Order.create({ customerName, studentId, items: orderItems, totalAmount, pickupNote });
+    const order = await Order.create({ customerName, studentId, studentAccount: req.session.studentId, items: orderItems, totalAmount, pickupNote });
     res.status(201).json(order);
   } catch (err) { next(err); }
 };
