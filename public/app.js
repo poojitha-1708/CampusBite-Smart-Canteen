@@ -1,5 +1,5 @@
 const API = "/api";
-const state = { menu: [], category: "All", search: "", cart: {}, myOrderIds: [], isAdmin: false };
+const state = { menu: [], category: "All", search: "", cart: {}, myOrderIds: [], isAdmin: false, isStudent: false, student: null };
 const $ = (selector) => document.querySelector(selector);
 const money = (value) => `₹${Number(value || 0).toLocaleString("en-IN")}`;
 const esc = (value) => String(value ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
@@ -72,19 +72,19 @@ function closeCart() { $("#modalBackdrop").classList.add("hidden"); }
 
 async function placeOrder(event) {
   event.preventDefault();
-
   const formElement = event.currentTarget;
   const form = new FormData(formElement);
+  if (!state.isStudent) {
+    closeCart(); openStudent(); toast("Please log in as a student before placing an order."); return;
+  }
   const items = Object.values(state.cart).map(item => ({ menuItem: item._id, quantity: item.quantity }));
-  const submit = event.currentTarget.querySelector("button[type=submit]");
+  const submit = formElement.querySelector("button[type=submit]");
   submit.disabled = true; submit.textContent = "Placing order…";
   try {
     const order = await request(`${API}/orders`, { method: "POST", body: {
-      customerName: form.get("customerName"), studentId: form.get("studentId"),
       pickupNote: form.get("pickupNote"), items
     }});
     state.myOrderIds = [order._id, ...state.myOrderIds].slice(0, 10);
-    localStorage.setItem("campusbiteOrderIds", JSON.stringify(state.myOrderIds));
     state.cart = {}; renderCartFab(); closeCart(); formElement.reset();
     toast(`Order placed! Your order ID is ${order._id.slice(-6).toUpperCase()}`);
     await loadMyOrders();
@@ -94,19 +94,15 @@ async function placeOrder(event) {
 }
 function statusClass(status) { return String(status).toLowerCase(); }
 async function loadMyOrders() {
-  state.myOrderIds = JSON.parse(localStorage.getItem("campusbiteOrderIds") || "[]");
-  if (!state.myOrderIds.length) {
-    $("#myOrders").innerHTML = `<div class="empty-state">Your recent orders will appear here after checkout.</div>`; return;
+  if (!state.isStudent) {
+    $("#myOrders").innerHTML = `<div class="empty-state">Please log in with your student account to view your orders.</div>`; return;
   }
   try {
-    const mine = await request(`${API}/orders/track`, {
-      method: "POST",
-      body: { orderIds: state.myOrderIds }
-    });
+    const mine = await request(`${API}/orders/track`, { method: "POST", body: {} });
     $("#myOrders").innerHTML = mine.length ? mine.map(order => `
       <article class="order-card"><div><h3>Order #${order._id.slice(-6).toUpperCase()} · ${esc(order.customerName)}</h3>
-      <p>${order.items.map(item => `${esc(item.name)} × ${item.quantity}`).join(", ")}<br>${new Date(order.createdAt).toLocaleString()}</p></div>
-      <div class="order-right"><span class="order-total">${money(order.totalAmount)}</span><span class="status ${statusClass(order.status)}">${esc(order.status)}</span></div></article>`).join("") : `<div class="empty-state">No matching orders found.</div>`;
+      <p>${order.items.map(item => `${esc(item.name)} × ${item.quantity}`).join(", ")} · ${new Date(order.createdAt).toLocaleString()}</p></div>
+      <div class="order-right"><span class="order-total">${money(order.totalAmount)}</span><span class="status ${statusClass(order.status)}">${esc(order.status)}</span></div></article>`).join("") : `<div class="empty-state">You haven't placed any orders yet. Explore the menu to get started.</div>`;
   } catch (err) { $("#myOrders").innerHTML = `<div class="empty-state">${esc(err.message)}</div>`; }
 }
 
@@ -127,6 +123,33 @@ async function loadAdmin() {
   </tr>`).join("") : `<tr><td colspan="6">No orders yet.</td></tr>`;
   $("#adminMenu").innerHTML = menu.map(item => `<div class="admin-menu-item"><span class="menu-emoji">${esc(item.image)}</span><div><b>${esc(item.name)}</b><small>${money(item.price)} · ${esc(item.category)} · ${item.available ? "Available" : "Unavailable"}</small></div><button data-availability="${item._id}" data-next="${!item.available}">${item.available ? "Mark unavailable" : "Make available"}</button><button data-delete-menu="${item._id}" class="delete-menu-btn">Delete</button></div>`).join("");
 }
+function openStudent() {
+  $("#studentPanel").classList.remove("hidden");
+  $("#studentPanel").scrollIntoView({ behavior: "smooth" });
+  $("#studentAuthError").classList.add("hidden");
+}
+function setStudent(student) {
+  state.isStudent = Boolean(student); state.student = student || null;
+  $("#studentToggle").textContent = state.isStudent ? `Hi, ${student.name.split(" ")[0]}` : "Student login";
+  $("#studentLogout").classList.toggle("hidden", !state.isStudent);
+  $("#studentCheckoutInfo").textContent = state.isStudent ? `Ordering as ${student.name} · ${student.studentId}` : "Log in to your student account before checkout.";
+  $("#studentPanel").classList.add("hidden");
+  if (state.isStudent) toast(`Welcome, ${student.name}`);
+  loadMyOrders();
+}
+async function checkStudentSession() {
+  try { const auth = await request(`${API}/auth/me`); state.isAdmin = auth.isAdmin; setStudent(auth.isStudent ? auth.student : null); }
+  catch {}
+}
+async function submitStudentAuth(event, endpoint) {
+  event.preventDefault(); const formElement = event.currentTarget;
+  const data = Object.fromEntries(new FormData(formElement).entries());
+  const errorEl = $("#studentAuthError"); errorEl.classList.add("hidden");
+  try { const result = await request(`${API}/auth/student/${endpoint}`, { method: "POST", body: data });
+    formElement.reset(); setStudent(result.student); await loadMyOrders();
+  } catch (err) { errorEl.textContent = err.message; errorEl.classList.remove("hidden"); }
+}
+
 async function openAdmin() {
   try {
     const auth = await request(`${API}/auth/me`);
@@ -222,6 +245,20 @@ $("#addMenuForm").addEventListener("submit", async event => {
     await loadMenu(); await loadAdmin(); toast("Menu item added");
   } catch (err) { toast(err.message); }
 });
+$("#studentToggle").addEventListener("click", () => {
+  if (state.isStudent) { $("#orders").scrollIntoView({ behavior: "smooth" }); return; }
+  $("#studentLoginForm").classList.remove("hidden"); $("#studentRegisterForm").classList.add("hidden");
+  $("#studentPanelTitle").innerHTML = 'Student <em>login</em>'; openStudent();
+});
+$("#closeStudent").addEventListener("click", () => $("#studentPanel").classList.add("hidden"));
+$("#showRegister").addEventListener("click", () => { $("#studentLoginForm").classList.add("hidden"); $("#studentRegisterForm").classList.remove("hidden"); $("#studentPanelTitle").innerHTML = 'Create <em>account</em>'; $("#studentAuthError").classList.add("hidden"); });
+$("#showStudentLogin").addEventListener("click", () => { $("#studentRegisterForm").classList.add("hidden"); $("#studentLoginForm").classList.remove("hidden"); $("#studentPanelTitle").innerHTML = 'Student <em>login</em>'; $("#studentAuthError").classList.add("hidden"); });
+$("#studentLoginForm").addEventListener("submit", event => submitStudentAuth(event, "login"));
+$("#studentRegisterForm").addEventListener("submit", event => submitStudentAuth(event, "register"));
+$("#studentLogout").addEventListener("click", async () => {
+  try { await request(`${API}/auth/student/logout`, { method: "POST", body: {} }); } catch (err) { toast(err.message); }
+  setStudent(null); toast("Student logged out");
+});
 $("#year").textContent = new Date().getFullYear();
 loadMenu();
-loadMyOrders();
+checkStudentSession();
