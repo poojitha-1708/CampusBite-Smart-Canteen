@@ -18,18 +18,18 @@ if (!process.env.SESSION_SECRET) {
   console.error("SESSION_SECRET is missing. Add it to your .env file.");
   process.exit(1);
 }
-app.set("trust proxy", 1);
 app.use(session({
   name: "campusbite.sid",
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   store: MongoStore.create({ mongoUrl: process.env.MONGODB_URI, collectionName: "sessions" }),
- cookie: {
-  httpOnly: true,
-  secure: true,
-  sameSite: "lax"
-}
+  cookie: {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 1000 * 60 * 60 * 4
+  }
 }));
 
 app.use(express.static(path.join(__dirname, "public")));
