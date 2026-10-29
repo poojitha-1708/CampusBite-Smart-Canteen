@@ -10,7 +10,7 @@
 <body>
   <header class="topbar">
     <a class="brand" href="#"><span class="brand-mark">CB</span><span>Campus<span class="brand-accent">Bite</span><small>SMART CANTEEN</small></span></a>
-    <nav><a class="nav-link active" href="#menu">Menu</a><a class="nav-link" href="#orders">My Orders</a><button id="adminToggle" class="btn btn-outline btn-small">Admin login</button></nav>
+    <nav><a class="nav-link active" href="#menu">Menu</a><a class="nav-link" href="#orders">My Orders</a><button id="studentToggle" class="btn btn-outline btn-small">Student login</button><button id="studentLogout" class="btn btn-outline btn-small hidden">Log out</button><button id="adminToggle" class="btn btn-outline btn-small">Admin login</button></nav>
   </header>
 
   <main>
@@ -45,6 +45,25 @@
       <div id="myOrders" class="orders-list"><div class="empty-state">Your recent orders will appear here after checkout.</div></div>
     </section>
 
+    <section id="studentPanel" class="section admin-panel hidden">
+      <div class="section-heading"><div><span class="eyebrow">STUDENT ACCOUNT</span><h2 id="studentPanelTitle">Student <em>login</em></h2><p>Sign in or create an account to place orders and track your order history.</p></div><button id="closeStudent" class="btn btn-outline">Close</button></div>
+      <form id="studentLoginForm" class="checkout-form login-form">
+        <label>Email<input name="email" type="email" required autocomplete="email" placeholder="student@example.com"></label>
+        <label>Password<input name="password" type="password" required autocomplete="current-password" minlength="8" placeholder="At least 8 characters"></label>
+        <button class="btn btn-primary" type="submit">Student sign in →</button>
+        <button id="showRegister" class="btn btn-outline" type="button">Create a student account</button>
+      </form>
+      <form id="studentRegisterForm" class="checkout-form login-form hidden">
+        <label>Full name<input name="name" required maxlength="80" autocomplete="name" placeholder="Your full name"></label>
+        <label>Student ID<input name="studentId" required maxlength="40" placeholder="e.g. 24CS012"></label>
+        <label>Email<input name="email" type="email" required autocomplete="email" placeholder="student@example.com"></label>
+        <label>Password<input name="password" type="password" required minlength="8" autocomplete="new-password" placeholder="At least 8 characters"></label>
+        <button class="btn btn-primary" type="submit">Create account →</button>
+        <button id="showStudentLogin" class="btn btn-outline" type="button">Already registered? Sign in</button>
+      </form>
+      <p id="studentAuthError" class="login-error hidden"></p>
+    </section>
+
     <section id="loginPanel" class="section admin-panel hidden">
       <div class="section-heading"><div><span class="eyebrow">RESTRICTED AREA</span><h2>Admin <em>login</em></h2><p>Sign in to manage menu items and orders.</p></div><button id="closeLogin" class="btn btn-outline">Close</button></div>
       <form id="adminLoginForm" class="checkout-form login-form">
@@ -71,7 +90,7 @@
         <button type="submit" class="btn btn-primary">Save dish</button><button type="button" id="cancelAddMenu" class="btn btn-outline">Cancel</button>
       </form>
       <div id="adminMenu" class="admin-menu-list"></div>
-      <p class="notice">For this academic demo, the staff dashboard has no login. Add authentication before deploying it publicly.</p>
+      <p class="notice">Admin access is protected by server-side authentication. Keep admin credentials private.</p>
     </section>
   </main>
 
@@ -83,7 +102,7 @@
       <div class="modal-head"><div><span class="eyebrow">ALMOST THERE</span><h2 id="cartTitle">Your <em>cart</em></h2></div><button id="closeCart" class="icon-btn" aria-label="Close cart">✕</button></div>
       <div id="cartItems" class="cart-items"></div>
       <div class="cart-total"><span>Total amount</span><strong id="cartTotal">₹0</strong></div>
-      <form id="checkoutForm" class="checkout-form"><label>Your name<input name="customerName" required maxlength="80" placeholder="e.g. Ananya Rao"></label><label>Student ID <span class="optional">(optional)</span><input name="studentId" maxlength="40" placeholder="e.g. 24CS012"></label><label>Pickup note <span class="optional">(optional)</span><input name="pickupNote" maxlength="200" placeholder="e.g. Less spicy, please"></label><button class="btn btn-primary checkout-btn" type="submit">Place order <span>→</span></button><p class="form-note">Payment is not integrated. This demo records orders for canteen pickup.</p></form>
+      <form id="checkoutForm" class="checkout-form"><p id="studentCheckoutInfo" class="form-note">Log in to your student account before checkout.</p><label>Pickup note <span class="optional">(optional)</span><input name="pickupNote" maxlength="200" placeholder="e.g. Less spicy, please"></label><button class="btn btn-primary checkout-btn" type="submit">Place order <span>→</span></button><p class="form-note">Sign in as a student before checkout. Payment is not integrated; orders are recorded for canteen pickup.</p></form>
     </div>
   </div>
   <div id="toast" class="toast" role="status"></div>
